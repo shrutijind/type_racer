@@ -45,4 +45,63 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize with a random text from the default difficulty level
     updateSampleText();
+
+    // --- Timing and controls ---
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const retryBtn = document.getElementById('retry-btn');
+    const userInput = document.getElementById('user-input');
+    const timeSpan = document.getElementById('time');
+
+    let startTime = null;
+    let endTime = null;
+    let elapsedTime = 0;
+
+    function updateTimeDisplay(seconds) {
+        // Display time rounded to two decimal places
+        timeSpan.textContent = seconds.toFixed(2);
+    }
+
+    function setInitialButtonState() {
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    }
+
+    function startTest() {
+        startTime = performance.now();
+        startBtn.disabled = true; // disable start once test begins
+        stopBtn.disabled = false;
+        userInput.value = '';
+        userInput.focus();
+    }
+
+    function stopTest() {
+        if (!startTime) return; // ignore if test wasn't started
+        endTime = performance.now();
+        elapsedTime = (endTime - startTime) / 1000; // seconds
+        updateTimeDisplay(elapsedTime);
+        stopBtn.disabled = true; // disable stop once test has ended
+        // allow starting a new test
+        startBtn.disabled = false;
+        // clear startTime to mark test as ended
+        startTime = null;
+    }
+
+    function retryTest() {
+        startTime = null;
+        endTime = null;
+        elapsedTime = 0;
+        userInput.value = '';
+        updateTimeDisplay(0);
+        setInitialButtonState();
+    }
+
+    // Wire up controls
+    startBtn.addEventListener('click', startTest);
+    stopBtn.addEventListener('click', stopTest);
+    retryBtn.addEventListener('click', retryTest);
+
+    // Ensure initial state
+    updateTimeDisplay(0);
+    setInitialButtonState();
 });
