@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const difficultySelect = document.getElementById('difficulty');
     const sampleTextDiv = document.getElementById('sample-text');
+    const levelSpan = document.getElementById('level');
+    const wpmSpan = document.getElementById('wpm');
+    let currentSampleText = '';
 
     function getRandomText(textArray) {
         const randomIndex = Math.floor(Math.random() * textArray.length);
@@ -39,6 +42,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         sampleTextDiv.textContent = selectedText;
+        currentSampleText = selectedText;
+        // update displayed difficulty level (capitalize first letter)
+        levelSpan.textContent = selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1);
     }
 
     difficultySelect.addEventListener('change', updateSampleText);
@@ -62,6 +68,30 @@ document.addEventListener('DOMContentLoaded', function() {
         timeSpan.textContent = seconds.toFixed(2);
     }
 
+    function normalizeWord(word) {
+        // remove leading/trailing punctuation and convert to lowercase
+        return word.replace(/^[^A-Za-z0-9']+|[^A-Za-z0-9']+$/g, '').toLowerCase();
+    }
+
+    function countCorrectWords(sample, typed) {
+        if (!sample) return 0;
+        const sampleWords = sample.split(/\s+/);
+        const typedWords = typed.split(/\s+/);
+        let correct = 0;
+        for (let i = 0; i < sampleWords.length; i++) {
+            const s = normalizeWord(sampleWords[i] || '');
+            const t = normalizeWord(typedWords[i] || '');
+            if (s && s === t) correct++;
+        }
+        return correct;
+    }
+
+    function calculateWPM(correctWords, seconds) {
+        if (!seconds || seconds <= 0) return 0;
+        const minutes = seconds / 60;
+        return Math.round(correctWords / minutes);
+    }
+
     function setInitialButtonState() {
         startBtn.disabled = false;
         stopBtn.disabled = true;
@@ -80,6 +110,14 @@ document.addEventListener('DOMContentLoaded', function() {
         endTime = performance.now();
         elapsedTime = (endTime - startTime) / 1000; // seconds
         updateTimeDisplay(elapsedTime);
+        // calculate correct words and WPM
+        const typed = userInput.value.trim();
+        const correctWords = countCorrectWords(currentSampleText, typed);
+        const wpm = calculateWPM(correctWords, elapsedTime);
+        wpmSpan.textContent = wpm;
+        // ensure displayed difficulty is current
+        const selectedDifficulty = difficultySelect.value;
+        levelSpan.textContent = selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1);
         stopBtn.disabled = true; // disable stop once test has ended
         // allow starting a new test
         startBtn.disabled = false;
@@ -93,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
         elapsedTime = 0;
         userInput.value = '';
         updateTimeDisplay(0);
+        wpmSpan.textContent = '0';
         setInitialButtonState();
     }
 
@@ -103,5 +142,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Ensure initial state
     updateTimeDisplay(0);
+    wpmSpan.textContent = '0';
     setInitialButtonState();
 });
